@@ -1,0 +1,14 @@
+{
+    "roi": {
+        "x": 1430,
+        "y": 425,
+        "width": 19,
+        "height": 223
+    },
+    "hold_time": 0.58,
+    "start_key": "F6",
+    "stop_key": "F7",
+    "green_threshold": 10,
+    "poll_interval": 0.1,
+    "post_cast_delay": 0.1
+}

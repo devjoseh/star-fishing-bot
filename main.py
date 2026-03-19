@@ -1,0 +1,76 @@
+"""
+main.py — Entry point do Star Fishing Bot
+
+Uso:
+    python main.py
+
+Controles padrão (editáveis em config.json):
+    F6  →  Iniciar o loop de pesca
+    F7  →  Parar o loop de pesca
+    Ctrl+C  →  Encerrar o script
+"""
+
+import sys
+import os
+import time
+
+# Garante que src/ seja encontrado independente de onde o script é chamado
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+from automator import FishingAutomator
+
+
+BANNER = r"""
+  _____ _              _____ _     _     _
+ / ____| |            |  ___(_)   | |   (_)
+| (___ | |_ __ _ _ __  | |_  _ ___| |__  _ _ __   __ _
+ \___ \| __/ _` | '__| |  _|| / __| '_ \| | '_ \ / _` |
+ ____) | || (_| | |    | |  | \__ \ | | | | | | | (_| |
+|_____/ \__\__,_|_|    \_|  |_|___/_| |_|_|_| |_|\__, |
+                                                   __/ |
+                    Auto Fishing Bot              |___/
+"""
+
+
+def main():
+    print(BANNER)
+    print("=" * 55)
+
+    bot = FishingAutomator()
+
+    start_key = bot.config.get("start_key", "F6")
+    stop_key  = bot.config.get("stop_key",  "F7")
+
+    if not bot.config.has_roi():
+        print("  ⚠️  ROI não configurada!")
+        print("  Execute primeiro:  python roi_selector.py")
+        print("=" * 55)
+    else:
+        roi = bot.config.get("roi")
+        hold = bot.config.get("hold_time", 0.75)
+        print(f"  ROI configurada   → x={roi['x']}, y={roi['y']}, "
+              f"w={roi['width']}, h={roi['height']}")
+        print(f"  Hold time         → {hold}s")
+
+    print(f"\n  [ {start_key} ]  Iniciar pesca")
+    print(f"  [ {stop_key} ]  Parar pesca")
+    print(f"  [ Ctrl+C ]  Sair")
+    print("=" * 55)
+    print()
+
+    bot.start_hotkey_listener()
+    print("[Main] Aguardando teclas... (Ctrl+C para sair)")
+
+    try:
+        while True:
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("\n[Main] Encerrando...")
+    finally:
+        bot.stop()
+        bot.stop_hotkey_listener()
+        print("[Main] Até logo!")
+
+
+if __name__ == "__main__":
+    main()
