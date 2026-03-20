@@ -38,12 +38,25 @@ class InputHandler:
 
     def click_at(self, x: int, y: int):
         """Move o mouse instantaneamente e clica."""
-        # O pydirectinput pode errar o clique se a tela for escalonada ou janela
-        # Adicionar offset manual se o usuário estiver jogando em modo janela 
-        # e a barra superior causar um desvio (ex: y - 30)
         pydirectinput.moveTo(x, y)
         time.sleep(0.2)
-        pydirectinput.click()
+        pydirectinput.click(x, y)  # passa x,y explicitamente para evitar drift
+
+    def click_at_precise(self, x: int, y: int):
+        """
+        Clique de alta precisão para botões de UI sensíveis (ex: Sell All).
+        Evita pydirectinput.click() sem coordenadas, que faz um moveTo interno
+        e pode derivar 1-2px pela normalização 65536/screen_size.
+        Usa mouseDown + mouseUp explícitos com dupla confirmação de posição.
+        """
+        pydirectinput.moveTo(x, y)
+        time.sleep(0.15)
+        # Segunda confirmação: garante que o cursor não derivou
+        pydirectinput.moveTo(x, y)
+        time.sleep(0.05)
+        pydirectinput.mouseDown(button="left")
+        time.sleep(0.05)
+        pydirectinput.mouseUp(button="left")
 
     # ------------------------------------------------------------------
     # Hotkeys

@@ -156,7 +156,7 @@ class FishingAutomator:
                             # height//4 garante que o clique nunca alcance as estrelas dos cards.
                             center_y = sell_roi["y"] + sell_roi["height"] // 4
                             print(f"[{ts}] {t('bot_clicking_sell', x=center_x, y=center_y)}")
-                            self.inputs.click_at(center_x, center_y)
+                            self.inputs.click_at_precise(center_x, center_y)
                         else:
                             print(f"[{ts}] {t('bot_sell_not_config')}")
 
