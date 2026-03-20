@@ -14,8 +14,10 @@ class InputHandler:
         self._listener = None
         self._start_callback = None
         self._stop_callback = None
+        self._toggle_callback = None
         self._start_key = None
         self._stop_key = None
+        self._toggle_key = None
 
     # ------------------------------------------------------------------
     # Cast
@@ -47,14 +49,17 @@ class InputHandler:
     # Hotkeys
     # ------------------------------------------------------------------
 
-    def set_callbacks(self, start_callback, stop_callback):
+    def set_callbacks(self, start_callback, stop_callback, toggle_callback=None):
         self._start_callback = start_callback
         self._stop_callback = stop_callback
+        self._toggle_callback = toggle_callback
 
-    def set_keys(self, start_key: str, stop_key: str):
-        """Recebe strings como 'F6', 'F7', 'x', etc."""
+    def set_keys(self, start_key: str, stop_key: str, toggle_key: str = None):
+        """Recebe strings como 'F6', 'F7', 'F8', 'x', etc."""
         self._start_key = self._parse_key(start_key)
         self._stop_key  = self._parse_key(stop_key)
+        if toggle_key:
+            self._toggle_key = self._parse_key(toggle_key)
 
     @staticmethod
     def _parse_key(key_str: str):
@@ -89,3 +94,6 @@ class InputHandler:
         elif self._stop_key and key == self._stop_key:
             if self._stop_callback:
                 self._stop_callback()
+        elif self._toggle_key and key == self._toggle_key:
+            if self._toggle_callback:
+                self._toggle_callback()

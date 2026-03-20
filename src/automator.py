@@ -32,15 +32,23 @@ class FishingAutomator:
         self._thread     = None
 
         # Hotkeys
-        self.inputs.set_callbacks(self.start, self.stop)
+        self.inputs.set_callbacks(self.start, self.stop, self.toggle_smart_pause)
         self.inputs.set_keys(
             self.config.get("start_key", "F6"),
             self.config.get("stop_key",  "F7"),
+            self.config.get("toggle_pause_key", "F8")
         )
 
     # ------------------------------------------------------------------
     # Controle externo
     # ------------------------------------------------------------------
+
+    def toggle_smart_pause(self):
+        current = self.config.get("inactive_pause_enabled", False)
+        new_state = not current
+        self.config.set("inactive_pause_enabled", new_state)
+        state_str = "ATIVADO" if new_state else "DESATIVADO"
+        print(f"\n[Bot] 🔄 Smart Pause foi {state_str} (Hotkey pressionada).")
 
     def start(self):
         if self.running:
@@ -92,6 +100,8 @@ class FishingAutomator:
         STATE_WAIT_GONE    = "WAIT_GONE"       # aguarda verde sumir antes de segurar de novo
 
         state = STATE_HOLDING_IDLE
+        last_cast_time = 0.0
+        consecutive_rapid_casts = 0
 
         with mss.mss() as sct:
 
@@ -176,6 +186,52 @@ class FishingAutomator:
                     pydirectinput.mouseUp(button="left")
                     ts = time.strftime("%H:%M:%S")
                     print(f"[{ts}] 🎣  Isca lançada! (hold={hold_time:.2f}s)")
+                    
+                    # -------------------------------------------------
+                    # Verificação de Smart Pause (Arremessos Rápidos)
+                    # -------------------------------------------------
+                    if self.config.get("inactive_pause_enabled", False):
+                        current_time = time.time()
+                        delta = current_time - last_cast_time
+                        
+                        threshold = self.config.get("inactive_cast_time_threshold", 5.0)
+                        triggers  = self.config.get("inactive_pause_triggers", 4)
+                        
+                        if delta < threshold:
+                            consecutive_rapid_casts += 1
+                        else:
+                            consecutive_rapid_casts = 0
+                            
+                        last_cast_time = current_time
+                        
+                        if consecutive_rapid_casts >= triggers:
+                            ts = time.strftime("%H:%M:%S")
+                            pause_mins = self.config.get("inactive_pause_duration", 15.0)
+                            print(f"\n[{ts}] ⚠️  {triggers} arremessos muito rápidos ({delta:.1f}s) detectados!")
+                            print(f"[{ts}] ⏸  Área de pesca parece estar *INATIVA*. Pausando robô por {pause_mins} minutos...\n")
+                            
+                            # O mouse já foi soltado acima, apenas garantimos a pausa do programa
+                            pause_secs = pause_mins * 60
+                            
+                            while pause_secs > 0 and not self._stop_event.is_set():
+                                wait_tick = min(60.0, pause_secs)
+                                self._stop_event.wait(timeout=wait_tick)
+                                pause_secs -= wait_tick
+                                if pause_secs > 0 and not self._stop_event.is_set():
+                                    print(f"   ⏳ Pausa inativa: restam {pause_secs/60:.1f} minutos para tentar novamente...")
+                                    
+                            if self._stop_event.is_set():
+                                break
+                            
+                            ts = time.strftime("%H:%M:%S")
+                            print(f"\n[{ts}] ▶  Pausa finalizada! Retomando pesca...")
+                            consecutive_rapid_casts = 0
+                            last_cast_time = time.time()
+                            
+                            pydirectinput.mouseDown(button="left")
+                            state = STATE_HOLDING_IDLE
+                            continue
+                    
                     state = STATE_WAIT_GONE
 
                 # -----------------------------------------------------

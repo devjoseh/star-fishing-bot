@@ -10,9 +10,14 @@ DEFAULT_CONFIG = {
     "hold_time": 0.58,    # Tempo de pressionar o mouse (segundos)
     "start_key": "F6",    # Tecla para iniciar o loop
     "stop_key": "F7",     # Tecla para parar o loop
+    "toggle_pause_key": "F8", # Tecla para ligar/desligar a pausa inativa
     "green_threshold": 10, # Mínimo de pixels verdes para detectar barra em repouso
     "poll_interval": 0.1,  # Intervalo de verificação em segundos
-    "post_cast_delay": 0.1 # Atraso após o lançamento
+    "post_cast_delay": 0.1, # Atraso após o lançamento
+    "inactive_pause_enabled": False,     # Ativar cooldown em áreas inativas
+    "inactive_pause_triggers": 4,        # Arremessos rápidos consecutivos para ativar a pausa
+    "inactive_pause_duration": 15.0,     # Duração da pausa em minutos
+    "inactive_cast_time_threshold": 5.0  # Segundos máximos para ser considerado 'rápido/spammado'
 }
 
 

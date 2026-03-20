@@ -65,6 +65,7 @@ def main():
 
     print(f"\n  [ {start_key} ]  Iniciar pesca")
     print(f"  [ {stop_key} ]  Parar pesca")
+    print(f"  [ {bot.config.get('toggle_pause_key', 'F8')} ]  Ligar/Desligar Smart Pause")
     print(f"  [ Ctrl+C ]  Sair")
     print("=" * 55)
     print()

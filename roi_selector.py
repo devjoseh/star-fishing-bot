@@ -64,9 +64,14 @@ def save_config(key, roi, screenshot_pil=None):
     config.setdefault("hold_time",       0.58)
     config.setdefault("start_key",       "F6")
     config.setdefault("stop_key",        "F7")
+    config.setdefault("toggle_pause_key","F8")
     config.setdefault("green_threshold", 10)
     config.setdefault("poll_interval",   0.1)
     config.setdefault("post_cast_delay", 0.1)
+    config.setdefault("inactive_pause_enabled",       False)
+    config.setdefault("inactive_pause_triggers",      4)
+    config.setdefault("inactive_pause_duration",      15.0)
+    config.setdefault("inactive_cast_time_threshold", 5.0)
 
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
