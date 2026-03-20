@@ -5,10 +5,14 @@ roi_selector.py — Ferramenta visual para configurar as regiões e templates.
 import tkinter as tk
 from tkinter import messagebox
 import json
-import os
-import sys
 import time
 import ctypes
+import sys
+import os
+
+# Adds src/ to python path so i18n and config can be imported easily
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+from i18n import t, set_language
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -41,9 +45,12 @@ def load_existing_config():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r") as f:
-                return json.load(f)
+                c = json.load(f)
+                set_language(c.get("language", "pt"))
+                return c
         except Exception:
             pass
+    set_language("pt")
     return {}
 
 
@@ -68,6 +75,7 @@ def save_config(key, roi, screenshot_pil=None):
     config.setdefault("green_threshold", 10)
     config.setdefault("poll_interval",   0.1)
     config.setdefault("post_cast_delay", 0.1)
+    config.setdefault("language",        "pt")
     config.setdefault("inactive_pause_enabled",       False)
     config.setdefault("inactive_pause_triggers",      4)
     config.setdefault("inactive_pause_duration",      15.0)
@@ -76,7 +84,7 @@ def save_config(key, roi, screenshot_pil=None):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-    print(f"✅  ROI '{key}' salva em {CONFIG_FILE}")
+    print(f"✅  {t('roi_saved_title')} '{key}' -> {CONFIG_FILE}")
 
 
 class ROISelector(tk.Toplevel):
@@ -86,7 +94,7 @@ class ROISelector(tk.Toplevel):
         self.screenshot_pil = screenshot_pil
         self.target_key = target_key
         
-        self.title(f"Selecionando: {target_key}")
+        self.title(t('select_area', target=target_key))
         self.resizable(False, False)
 
         orig_w, orig_h = screenshot_pil.size
@@ -106,8 +114,8 @@ class ROISelector(tk.Toplevel):
         footer.pack(fill="x")
 
         self.info_label = tk.Label(
-            footer, text=f"Alvo: {target_key.upper()}  |  Selecione a área",
-            bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10), padx=10
+            footer, text=t('select_area', target=target_key),
+            bg="#1e1e1e", fg="#dddddd", font=("Consolas", 10), padx=10
         )
         self.info_label.pack(side="left", pady=6)
 
@@ -115,14 +123,14 @@ class ROISelector(tk.Toplevel):
         btn_frame.pack(side="right", padx=8, pady=4)
 
         self.reset_btn = tk.Button(
-            btn_frame, text="Resetar (R)", command=self.reset,
+            btn_frame, text=t('reset_btn'), command=self.reset,
             bg="#333333", fg="white", activebackground="#444444", activeforeground="white",
             relief="flat", font=("Segoe UI", 9, "bold"), padx=12, pady=4, cursor="hand2", bd=0
         )
         self.reset_btn.pack(side="left", padx=4)
 
         self.save_btn = tk.Button(
-            btn_frame, text="Salvar ROI (Enter)", command=self.confirm_save,
+            btn_frame, text=t('save_roi_btn'), command=self.confirm_save,
             bg="#0066cc", fg="white", activebackground="#0088ff", activeforeground="white",
             relief="flat", font=("Segoe UI", 9, "bold"), padx=12, pady=4, cursor="hand2", bd=0,
             state="disabled"
@@ -192,7 +200,7 @@ class ROISelector(tk.Toplevel):
     def _update_info(self, confirmed):
         if self._start and self._end:
             roi = self._compute_roi()
-            status = "✔ Pronto para salvar" if confirmed else "Selecionando..."
+            status = t('ready_to_save') if confirmed else t('selecting')
             self.info_label.config(
                 text=f"{status}  |  x={roi['x']} y={roi['y']}  w={roi['width']} h={roi['height']}",
                 fg="#00ff88" if confirmed else "#00ccff"
@@ -217,19 +225,19 @@ class ROISelector(tk.Toplevel):
         self._start = None
         self._end   = None
         self.save_btn.config(state="disabled")
-        self.info_label.config(text=f"Selecione a área para: {self.target_key}", fg="#dddddd")
+        self.info_label.config(text=t('select_area', target=self.target_key), fg="#dddddd")
 
     def confirm_save(self):
         if self._start is None or self._end is None:
-            messagebox.showwarning("Atenção", "Nenhuma região selecionada ainda.")
+            messagebox.showwarning("Atenção", t('no_region_warn'))
             return
         if self._start == self._end:
-            messagebox.showwarning("Atenção", "A seleção está vazia (ponto único).")
+            messagebox.showwarning("Atenção", t('empty_region_warn'))
             return
 
         roi = self._compute_roi()
         save_config(self.target_key, roi, self.screenshot_pil)
-        messagebox.showinfo("ROI Salva!", f"Região {self.target_key} salva com sucesso!")
+        messagebox.showinfo(t('roi_saved_title'), t('roi_saved_msg', target=self.target_key))
         self.destroy()
 
 
@@ -254,46 +262,34 @@ class ModernButton(tk.Button):
 class MainMenu(tk.Tk):
     def __init__(self):
         super().__init__()
+        # Preload configuration and language
+        load_existing_config()
+        
         self.title("Star Fishing Setup")
-        self.geometry("400x380")
+        self.geometry("400x300")
         self.configure(bg="#0F0F0F")
         self.resizable(False, False)
         
         container = tk.Frame(self, bg="#0F0F0F")
         container.pack(expand=True, fill="both", padx=30, pady=30)
 
-        lbl_title = tk.Label(
-            container, text="CONFIGURAÇÃO DE VISÃO", 
-            font=("Segoe UI", 14, "bold"), bg="#0F0F0F", fg="#FFFFFF"
-        )
-        lbl_title.pack(pady=(0, 5))
+        lbl_title = tk.Label(self, text=t('vision_setup_title'), font=("Arial", 12))
+        lbl_title.pack(pady=20)
 
-        lbl_sub = tk.Label(
-            container, text="Mapeie os elementos na tela do jogo", 
-            font=("Segoe UI", 9), bg="#0F0F0F", fg="#888888"
-        )
-        lbl_sub.pack(pady=(0, 30))
+        btn1 = tk.Button(self, text=t('start_fishing_btn'), font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("roi"))
+        btn1.pack(pady=10)
 
-        ModernButton(
-            container, text="BARRA DE PESCA", 
-            command=lambda: self.start_capture("roi")
-        ).pack(fill="x", pady=6)
+        btn2 = tk.Button(self, text=t('inventory_full_btn'), font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("inventory_roi"))
+        btn2.pack(pady=10)
 
-        ModernButton(
-            container, text="ALERTA 'INVENTORY FULL'", 
-            command=lambda: self.start_capture("inventory_roi")
-        ).pack(fill="x", pady=6)
-
-        ModernButton(
-            container, text="BOTÃO 'SELL ALL'", 
-            command=lambda: self.start_capture("sell_button_roi")
-        ).pack(fill="x", pady=6)
+        btn3 = tk.Button(self, text=t('sell_all_btn'), font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("sell_button_roi"))
+        btn3.pack(pady=10)
         
-        lbl_hint = tk.Label(
-            container, text="Você terá 2 segundos para focar no jogo\nantes da captura de tela.", 
-            font=("Segoe UI", 8), bg="#0F0F0F", fg="#555555"
-        )
-        lbl_hint.pack(side="bottom", pady=(20, 0))
+        lbl_hint = tk.Label(self, text=t('vision_setup_hint'), fg="gray")
+        lbl_hint.pack(pady=20)
 
     def start_capture(self, target_key):
         self.withdraw()

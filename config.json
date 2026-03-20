@@ -27,5 +27,6 @@
     "inactive_pause_enabled": true,
     "inactive_pause_triggers": 4,
     "inactive_pause_duration": 1.0,
-    "inactive_cast_time_threshold": 5.0
+    "inactive_cast_time_threshold": 5.0,
+    "language": "en"
 }

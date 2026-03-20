@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import json
 import os
+from i18n import t, set_language
 
 class ModernButton(tk.Button):
     def __init__(self, parent, text, command, width=35, bg="#222222"):
@@ -191,19 +192,67 @@ class ModernHotkeyButton(tk.Frame):
         return self.current_key
 
 
+class LanguageSelector(tk.Frame):
+    def __init__(self, parent, current_lang, on_change):
+        # Brutalist segmented control, 0px border
+        super().__init__(parent, bg="#1A1A1A")
+        self.current_lang = current_lang
+        self.on_change = on_change
+        
+        self.btn_pt = tk.Button(
+            self, text="PT", font=("Segoe UI", 8, "bold"), width=5,
+            relief="flat", bd=0, cursor="hand2", command=lambda: self.select("pt")
+        )
+        self.btn_pt.pack(side="left", padx=(0, 1), ipady=2)
+        
+        self.btn_en = tk.Button(
+            self, text="EN", font=("Segoe UI", 8, "bold"), width=5,
+            relief="flat", bd=0, cursor="hand2", command=lambda: self.select("en")
+        )
+        self.btn_en.pack(side="left", ipady=2)
+        
+        self.update_ui()
+        
+    def select(self, lang):
+        if self.current_lang != lang:
+            self.current_lang = lang
+            self.update_ui()
+            self.on_change(lang)
+            
+    def update_ui(self):
+        # Active: Bright Neon, Inactive: Dark Muted
+        if self.current_lang == "pt":
+            self.btn_pt.config(bg="#00FF88", fg="#000000", activebackground="#00CC66", activeforeground="#000000")
+            self.btn_en.config(bg="#222222", fg="#666666", activebackground="#333333", activeforeground="#888888")
+        else:
+            self.btn_en.config(bg="#00FF88", fg="#000000", activebackground="#00CC66", activeforeground="#000000")
+            self.btn_pt.config(bg="#222222", fg="#666666", activebackground="#333333", activeforeground="#888888")
+
+
 class SettingsApp(tk.Tk):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
-        self.title("Star Fishing — Control Panel")
+        self.title(f"Star Fishing — {t('ctrl_panel_title')}")
         self.geometry("660x700")
         self.configure(bg="#0F0F0F")
         self.resizable(False, False)
         
-        lbl_title = tk.Label(self, text="PAINEL DE CONTROLE", font=("Segoe UI", 14, "bold"), bg="#0F0F0F", fg="#FFFFFF")
-        lbl_title.pack(pady=(25, 5))
+        # Load language from bot config
+        self.lang = self.bot.config.get("language", "pt")
+        set_language(self.lang)
         
-        lbl_sub = tk.Label(self, text="O bot (F6/F7) roda normalmente enquanto esta janela estiver aberta.", font=("Segoe UI", 9), bg="#0F0F0F", fg="#888888")
+        self.header_frame = tk.Frame(self, bg="#0F0F0F")
+        self.header_frame.pack(fill="x", pady=(25, 5), padx=20)
+        
+        # Lang Toggle Segmented UI
+        self.lang_selector = LanguageSelector(self.header_frame, self.lang, self.change_language)
+        self.lang_selector.pack(side="right")
+        
+        lbl_title = tk.Label(self.header_frame, text=t("ctrl_panel_title"), font=("Segoe UI", 14, "bold"), bg="#0F0F0F", fg="#FFFFFF")
+        lbl_title.pack(side="top")
+        
+        lbl_sub = tk.Label(self, text=t("ctrl_panel_subtitle"), font=("Segoe UI", 9), bg="#0F0F0F", fg="#888888")
         lbl_sub.pack(pady=(0, 15))
         
         main_frame = tk.Frame(self, bg="#0F0F0F")
@@ -223,59 +272,68 @@ class SettingsApp(tk.Tk):
         # --- LEFT COLUMN ---
         card_keys = tk.Frame(left_col, bg="#1A1A1A", padx=15, pady=15)
         card_keys.pack(fill="x", pady=(0, 15))
-        tk.Label(card_keys, text="TECLAS DE ATALHO", font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
+        tk.Label(card_keys, text=t("hotkeys_group"), font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
         
-        self.start_key = ModernHotkeyButton(card_keys, "Start / Stop", "Start Key", c.get("start_key", "F6"), auto_save)
+        self.start_key = ModernHotkeyButton(card_keys, t("start_stop_lbl"), t("start_key"), c.get("start_key", "F6"), auto_save)
         self.start_key.pack(fill="x", pady=4)
-        self.stop_key = ModernHotkeyButton(card_keys, "Stop Forced", "Stop Key", c.get("stop_key", "F7"), auto_save)
+        self.stop_key = ModernHotkeyButton(card_keys, t("stop_forced_lbl"), t("stop_key"), c.get("stop_key", "F7"), auto_save)
         self.stop_key.pack(fill="x", pady=4)
-        self.toggle_key = ModernHotkeyButton(card_keys, "Smart Pause", "Smart Pause Toggle", c.get("toggle_pause_key", "F8"), auto_save)
+        self.toggle_key = ModernHotkeyButton(card_keys, t("smart_pause_toggle_lbl"), t("pause_key"), c.get("toggle_pause_key", "F8"), auto_save)
         self.toggle_key.pack(fill="x", pady=4)
         
         card_times = tk.Frame(left_col, bg="#1A1A1A", padx=15, pady=15)
         card_times.pack(fill="x")
-        tk.Label(card_times, text="TEMPOS & DELAYS", font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
+        tk.Label(card_times, text=t("times_delays_group"), font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
         
-        self.hold_time = ModernEntry(card_times, "Hold Time (seg)", c.get("hold_time", 0.58), auto_save)
+        self.hold_time = ModernEntry(card_times, t("hold_time_lbl"), c.get("hold_time", 0.58), auto_save)
         self.hold_time.pack(fill="x", pady=4)
-        self.post_cast = ModernEntry(card_times, "Atraso Pós-Arremesso", c.get("post_cast_delay", 0.1), auto_save)
+        self.post_cast = ModernEntry(card_times, t("post_cast_lbl"), c.get("post_cast_delay", 0.1), auto_save)
         self.post_cast.pack(fill="x", pady=4)
         
         # --- RIGHT COLUMN ---
         card_pause = tk.Frame(right_col, bg="#1A1A1A", padx=15, pady=15)
         card_pause.pack(fill="x", pady=(0, 15))
-        tk.Label(card_pause, text="SMART PAUSE (ANTI-AFK)", font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
+        tk.Label(card_pause, text=t("smart_pause_group"), font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
         
-        self.pause_enabled = ModernToggle(card_pause, "Ativar Smart Pause", c.get("inactive_pause_enabled", False), auto_save)
+        self.pause_enabled = ModernToggle(card_pause, t("enable_smart_pause"), c.get("inactive_pause_enabled", False), auto_save)
         self.pause_enabled.pack(fill="x", pady=4)
         
-        self.pause_triggers = ModernEntry(card_pause, "Arremessos p/ Pausar", c.get("inactive_pause_triggers", 4), auto_save)
+        self.pause_triggers = ModernEntry(card_pause, t("casts_to_pause"), c.get("inactive_pause_triggers", 4), auto_save)
         self.pause_triggers.pack(fill="x", pady=4)
-        self.pause_duration = ModernEntry(card_pause, "Duração Pausa (min)", c.get("inactive_pause_duration", 15.0), auto_save)
+        self.pause_duration = ModernEntry(card_pause, t("pause_duration"), c.get("inactive_pause_duration", 15.0), auto_save)
         self.pause_duration.pack(fill="x", pady=4)
-        self.pause_thresh = ModernEntry(card_pause, "Tempo Spam (seg)", c.get("inactive_cast_time_threshold", 5.0), auto_save)
+        self.pause_thresh = ModernEntry(card_pause, t("spam_threshold"), c.get("inactive_cast_time_threshold", 5.0), auto_save)
         self.pause_thresh.pack(fill="x", pady=4)
         
         card_adv = tk.Frame(right_col, bg="#1A1A1A", padx=15, pady=15)
         card_adv.pack(fill="x")
-        tk.Label(card_adv, text="DETECÇÃO", font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
+        tk.Label(card_adv, text=t("detection_group"), font=("Segoe UI", 10, "bold"), bg="#1A1A1A", fg="#FFFFFF").pack(anchor="w", pady=(0, 10))
         
-        self.green_thresh = ModernEntry(card_adv, "Min Pixels Verdes", c.get("green_threshold", 10), auto_save)
+        self.green_thresh = ModernEntry(card_adv, t("green_pixels_lbl"), c.get("green_threshold", 10), auto_save)
         self.green_thresh.pack(fill="x", pady=4)
-        self.poll_interval = ModernEntry(card_adv, "Poll Interval (seg)", c.get("poll_interval", 0.1), auto_save)
+        self.poll_interval = ModernEntry(card_adv, t("poll_interval_lbl"), c.get("poll_interval", 0.1), auto_save)
         self.poll_interval.pack(fill="x", pady=4)
         
         # --- FOOTER ---
         footer = tk.Frame(self, bg="#0F0F0F")
         footer.pack(fill="x", side="bottom", pady=25)
         
-        self.save_status = tk.Label(footer, text="Modifique qualquer campo e salvo automaticamente", font=("Segoe UI", 8), bg="#0F0F0F", fg="#444444")
+        self.save_status = tk.Label(footer, text=t("auto_save_hint"), font=("Segoe UI", 8), bg="#0F0F0F", fg="#444444")
         self.save_status.pack(pady=(0, 10))
         
-        save_btn = ModernButton(footer, text="SALVAR / FECHAR JANELA", command=self.destroy, width=30, bg="#0066CC")
+        save_btn = ModernButton(footer, text=t("save_close_btn"), command=self.destroy, width=30, bg="#0066CC")
         save_btn.bind("<Enter>", lambda e: save_btn.config(bg="#0088FF"))
         save_btn.bind("<Leave>", lambda e: save_btn.config(bg="#0066CC"))
         save_btn.pack(ipadx=20)
+
+    def change_language(self, new_lang):
+        self.lang = new_lang
+        self.bot.config.set("language", new_lang)
+        self.bot.config.save()
+        
+        # Flawless in-process soft-reboot of the GUI to apply new translations
+        self.bot.wants_restart = True
+        self.destroy()
 
     def save_settings(self, silent=False):
         try:
@@ -310,7 +368,7 @@ class SettingsApp(tk.Tk):
             # Recarrega hotkeys no bot ao vivo
             self.bot.inputs.set_keys(new_start, new_stop, new_toggle)
             
-            self.save_status.config(text="✓ Salvo com sucesso!", fg="#00FF88")
+            self.save_status.config(text=t("saved_success"), fg="#00FF88")
             self.after(2000, lambda: self.save_status.config(text="", fg="#0F0F0F"))
                 
             if not silent:
