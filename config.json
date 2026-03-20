@@ -12,10 +12,10 @@
         "height": 105
     },
     "sell_button_roi": {
-        "x": 1201,
-        "y": 277,
-        "width": 118,
-        "height": 28
+        "x": 1183,
+        "y": 270,
+        "width": 151,
+        "height": 41
     },
     "hold_time": 0.58,
     "start_key": "F6",
@@ -27,6 +27,6 @@
     "inactive_pause_enabled": true,
     "inactive_pause_triggers": 4,
     "inactive_pause_duration": 1.0,
-    "inactive_cast_time_threshold": 5.0,
+    "inactive_cast_time_threshold": 6.0,
     "language": "en"
 }

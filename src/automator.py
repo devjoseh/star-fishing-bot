@@ -101,8 +101,7 @@ class FishingAutomator:
         STATE_WAIT_GONE    = "WAIT_GONE"       # aguarda verde sumir antes de segurar de novo
 
         state = STATE_HOLDING_IDLE
-        last_cast_time = 0.0
-        consecutive_rapid_casts = 0
+        cast_timestamps = []   # sliding window of recent cast times
 
         with mss.mss() as sct:
 
@@ -189,49 +188,52 @@ class FishingAutomator:
                     print(f"[{ts}] {t('bot_cast_done', hold=f'{hold_time:.2f}')}")
                     
                     # -------------------------------------------------
-                    # Verificação de Smart Pause (Arremessos Rápidos)
+                    # Verificação de Smart Pause — janela deslizante
+                    # Dispara SOMENTE se os últimos N arremessos
+                    # ocorreram todos dentro da janela mínima configurada.
+                    # Isso é impossível durante a pesca normal, mas 
+                    # garantido quando não há peixes (spam).
                     # -------------------------------------------------
                     if self.config.get("inactive_pause_enabled", False):
                         current_time = time.time()
-                        delta = current_time - last_cast_time
-                        
-                        threshold = self.config.get("inactive_cast_time_threshold", 5.0)
                         triggers  = self.config.get("inactive_pause_triggers", 4)
-                        
-                        if delta < threshold:
-                            consecutive_rapid_casts += 1
-                        else:
-                            consecutive_rapid_casts = 0
-                            
-                        last_cast_time = current_time
-                        
-                        if consecutive_rapid_casts >= triggers:
-                            ts = time.strftime("%H:%M:%S")
-                            pause_mins = self.config.get("inactive_pause_duration", 15.0)
-                            print(f"\n[{ts}] {t('bot_rapid_detect', triggers=triggers, delta=f'{delta:.1f}')}")
-                            print(f"[{ts}] {t('bot_inactive_area', mins=pause_mins)}\n")
-                            
-                            # O mouse já foi soltado acima, apenas garantimos a pausa do programa
-                            pause_secs = pause_mins * 60
-                            
-                            while pause_secs > 0 and not self._stop_event.is_set():
-                                wait_tick = min(60.0, pause_secs)
-                                self._stop_event.wait(timeout=wait_tick)
-                                pause_secs -= wait_tick
-                                if pause_secs > 0 and not self._stop_event.is_set():
-                                    print(t("bot_pause_remaining", mins=f"{pause_secs/60:.1f}"))
-                                    
-                            if self._stop_event.is_set():
-                                break
-                            
-                            ts = time.strftime("%H:%M:%S")
-                            print(f"\n[{ts}] {t('bot_pause_finished')}")
-                            consecutive_rapid_casts = 0
-                            last_cast_time = time.time()
-                            
-                            pydirectinput.mouseDown(button="left")
-                            state = STATE_HOLDING_IDLE
-                            continue
+                        min_window = self.config.get("inactive_cast_time_threshold", 5.0)
+
+                        # Adiciona timestamp atual e mantém só os últimos N
+                        cast_timestamps.append(current_time)
+                        if len(cast_timestamps) > triggers:
+                            cast_timestamps.pop(0)
+
+                        # Só avalia quando a janela está cheia
+                        if len(cast_timestamps) == triggers:
+                            window = cast_timestamps[-1] - cast_timestamps[0]
+
+                            if window <= min_window:
+                                ts = time.strftime("%H:%M:%S")
+                                pause_mins = self.config.get("inactive_pause_duration", 15.0)
+                                print(f"\n[{ts}] {t('bot_rapid_detect', triggers=triggers, delta=f'{window:.1f}')}")
+                                print(f"[{ts}] {t('bot_inactive_area', mins=pause_mins)}\n")
+
+                                # O mouse já foi soltado acima
+                                pause_secs = pause_mins * 60
+
+                                while pause_secs > 0 and not self._stop_event.is_set():
+                                    wait_tick = min(60.0, pause_secs)
+                                    self._stop_event.wait(timeout=wait_tick)
+                                    pause_secs -= wait_tick
+                                    if pause_secs > 0 and not self._stop_event.is_set():
+                                        print(t("bot_pause_remaining", mins=f"{pause_secs/60:.1f}"))
+
+                                if self._stop_event.is_set():
+                                    break
+
+                                ts = time.strftime("%H:%M:%S")
+                                print(f"\n[{ts}] {t('bot_pause_finished')}")
+                                cast_timestamps.clear()   # reseta a janela após a pausa
+
+                                pydirectinput.mouseDown(button="left")
+                                state = STATE_HOLDING_IDLE
+                                continue
                     
                     state = STATE_WAIT_GONE
 

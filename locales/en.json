@@ -74,7 +74,7 @@
     "bot_mouse_reheld": "🖱  Mouse re-held — resuming fishing...",
     "bot_bar_detected": "✅  Bar detected! ({green}px green) — Casting...",
     "bot_cast_done": "🎣  Bait casted! (hold={hold}s)",
-    "bot_rapid_detect": "⚠️  {triggers} very fast casts ({delta}s) detected!",
+    "bot_rapid_detect": "⚠️  {triggers} casts in {delta}s window — spam detected!",
     "bot_inactive_area": "⏸  Fishing area seems *INACTIVE*. Pausing bot for {mins} minutes...",
     "bot_pause_remaining": "   ⏳ Inactive pause: {mins} minutes left to retry...",
     "bot_pause_finished": "▶  Pause finished! Resuming fishing...",

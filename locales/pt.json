@@ -74,7 +74,7 @@
     "bot_mouse_reheld": "🖱  Mouse re-segurado — voltando a pescar...",
     "bot_bar_detected": "✅  Barra detectada! ({green}px verdes) — Lançando...",
     "bot_cast_done": "🎣  Isca lançada! (hold={hold}s)",
-    "bot_rapid_detect": "⚠️  {triggers} arremessos muito rápidos ({delta}s) detectados!",
+    "bot_rapid_detect": "⚠️  {triggers} arremessos em janela de {delta}s — spam detectado!",
     "bot_inactive_area": "⏸  Área de pesca parece estar *INATIVA*. Pausando robô por {mins} minutos...",
     "bot_pause_remaining": "   ⏳ Pausa inativa: restam {mins} minutos para tentar novamente...",
     "bot_pause_finished": "▶  Pausa finalizada! Retomando pesca...",
