@@ -129,32 +129,48 @@ class FishingAutomator:
                     if self.vision.is_inventory_full(sct) and is_bar_on_screen:
                         ts = time.strftime("%H:%M:%S")
                         print(f"[{ts}] {t('bot_inv_full')}")
-                        
+
                         # Solta a vara antes de mexer no inventário
                         pydirectinput.mouseUp(button="left")
                         time.sleep(0.2)
-                        
-                        # Processo de venda
-                        self.inputs.press_key('3')
-                        time.sleep(1.2)  # Tempo pro menu abrir e renderizar
-                        
+
                         sell_roi = self.config.get("sell_button_roi")
+
+                        # FIX 1: Move o mouse para a área do botão ANTES de pressionar '3'.
+                        # Isso garante que a janela do Roblox mantém o foco e recebe a tecla.
+                        if sell_roi:
+                            focus_x = sell_roi["x"] + sell_roi["width"] // 2
+                            focus_y = sell_roi["y"] + sell_roi["height"] // 2
+                            pydirectinput.moveTo(focus_x, focus_y)
+                            time.sleep(0.1)
+
+                        # Abre o inventário (Backpack)
+                        self.inputs.press_key('3')
+
+                        # FIX 2: Delay maior para garantir que o inventário abre e renderiza completamente
+                        time.sleep(1.5)
+
                         if sell_roi:
                             center_x = sell_roi["x"] + sell_roi["width"] // 2
-                            # Leve ajuste para cima (ex: -10) ou para o centro exato. 
-                            # Clicar numa estrela abaixo pode significar que o 'height' copiado incluiu a borda das estrelas
-                            center_y = sell_roi["y"] + (sell_roi["height"] // 2) - 5
+                            # FIX 3: Clica no quarto superior do botão, bem longe das estrelas abaixo.
+                            # height//4 garante que o clique nunca alcance as estrelas dos cards.
+                            center_y = sell_roi["y"] + sell_roi["height"] // 4
                             print(f"[{ts}] {t('bot_clicking_sell', x=center_x, y=center_y)}")
                             self.inputs.click_at(center_x, center_y)
                         else:
                             print(f"[{ts}] {t('bot_sell_not_config')}")
-                            
-                        time.sleep(0.5)
-                        
+
+                        # FIX 4: Delay maior após o clique — aguarda a transação processar
+                        # e o inventário fechar a animação antes de trocar de item
+                        time.sleep(1.2)
+
                         # Volta pra vara
                         self.inputs.press_key('1')
-                        time.sleep(1.5)  # Tempo pra o personagem puxar a vara de novo
-                        
+
+                        # FIX 4 (cont.): Delay maior para a animação de equip completar.
+                        # 1.5s era insuficiente — o mouseDown chegava antes da vara estar equipada.
+                        time.sleep(2.0)
+
                         # Retorna a segurar a vara e ao estado idle
                         pydirectinput.mouseDown(button="left")
                         ts = time.strftime("%H:%M:%S")
