@@ -30,6 +30,19 @@ class InputHandler:
         time.sleep(hold_time)
         pydirectinput.mouseUp(button="left")
 
+    def press_key(self, key_char: str):
+        """Pressiona e solta uma tecla simples do teclado."""
+        pydirectinput.press(key_char)
+
+    def click_at(self, x: int, y: int):
+        """Move o mouse instantaneamente e clica."""
+        # O pydirectinput pode errar o clique se a tela for escalonada ou janela
+        # Adicionar offset manual se o usuário estiver jogando em modo janela 
+        # e a barra superior causar um desvio (ex: y - 30)
+        pydirectinput.moveTo(x, y)
+        time.sleep(0.2)
+        pydirectinput.click()
+
     # ------------------------------------------------------------------
     # Hotkeys
     # ------------------------------------------------------------------

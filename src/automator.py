@@ -106,8 +106,52 @@ class FishingAutomator:
                 # HOLDING_IDLE: mouse pressionado, monitorando o verde
                 # -----------------------------------------------------
                 if state == STATE_HOLDING_IDLE:
-                    frame = self.vision.capture_roi(sct)
+                    
+                    frame = self.vision.capture_custom_roi(sct, "roi")
 
+                    # O "sistema que já funciona": se houver uma quantia mínima de verde (>0)
+                    # sabemos que a barrinha (que sempre tem um trecho verde fixo) 
+                    # está de fato renderizada na tela, 
+                    # significando que a isca não está na água!
+                    is_bar_on_screen = self.vision.count_green_pixels(frame) > 0
+
+                    # 1) Primeiro, verifica se o inventário está cheio E se a barra está visível (pesca não em andamento)
+                    if self.vision.is_inventory_full(sct) and is_bar_on_screen:
+                        ts = time.strftime("%H:%M:%S")
+                        print(f"[{ts}] 🎒 Inventário Cheio detectado! Iniciando venda...")
+                        
+                        # Solta a vara antes de mexer no inventário
+                        pydirectinput.mouseUp(button="left")
+                        time.sleep(0.2)
+                        
+                        # Processo de venda
+                        self.inputs.press_key('3')
+                        time.sleep(1.2)  # Tempo pro menu abrir e renderizar
+                        
+                        sell_roi = self.config.get("sell_button_roi")
+                        if sell_roi:
+                            center_x = sell_roi["x"] + sell_roi["width"] // 2
+                            # Leve ajuste para cima (ex: -10) ou para o centro exato. 
+                            # Clicar numa estrela abaixo pode significar que o 'height' copiado incluiu a borda das estrelas
+                            center_y = sell_roi["y"] + (sell_roi["height"] // 2) - 5
+                            print(f"[{ts}] 💰 Movendo mouse e clicando em 'Sell All' (x={center_x}, y={center_y})")
+                            self.inputs.click_at(center_x, center_y)
+                        else:
+                            print(f"[{ts}] ❌ ATENÇÃO: Botão Sell All não foi configurado.")
+                            
+                        time.sleep(0.5)
+                        
+                        # Volta pra vara
+                        self.inputs.press_key('1')
+                        time.sleep(1.5)  # Tempo pra o personagem puxar a vara de novo
+                        
+                        # Retorna a segurar a vara e ao estado idle
+                        pydirectinput.mouseDown(button="left")
+                        ts = time.strftime("%H:%M:%S")
+                        print(f"[{ts}] 🖱  Mouse re-segurado — voltando a pescar...")
+                        continue
+
+                    # 2) Depois, verifica se a barra está pronta para fisgar/lançar (verde ultrapassou o threshold alto)
                     if self.vision.is_bar_ready(frame):
                         # Verde detectado: solta o mouse
                         pydirectinput.mouseUp(button="left")

@@ -1,14 +1,5 @@
 """
-roi_selector.py — Ferramenta visual para configurar a região da barra de pesca.
-
-Uso:
-    python roi_selector.py
-
-Instruções:
-    1. Uma captura da tela inteira será exibida em uma janela.
-    2. Clique e arraste para selecionar a região onde a barra de pesca aparece.
-    3. Clique em "Salvar ROI" (ou pressione S) para confirmar.
-    4. Pressione R para resetar a seleção, ou feche a janela para cancelar.
+roi_selector.py — Ferramenta visual para configurar as regiões e templates.
 """
 
 import tkinter as tk
@@ -16,6 +7,16 @@ from tkinter import messagebox
 import json
 import os
 import sys
+import time
+import ctypes
+
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
 
 try:
     import mss
@@ -27,15 +28,14 @@ except ImportError as e:
     sys.exit(1)
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
-# Resolução máxima de exibição (escalonado para caber na tela)
+if not os.path.exists(ASSETS_DIR):
+    os.makedirs(ASSETS_DIR)
+
 MAX_DISPLAY_W = 1400
 MAX_DISPLAY_H = 850
 
-
-# ---------------------------------------------------------------------------
-# Utilitários de config
-# ---------------------------------------------------------------------------
 
 def load_existing_config():
     if os.path.exists(CONFIG_FILE):
@@ -47,55 +47,61 @@ def load_existing_config():
     return {}
 
 
-def save_roi(roi):
+def save_config(key, roi, screenshot_pil=None):
     config = load_existing_config()
-    config["roi"] = roi
-    config.setdefault("hold_time",       0.75)
+    config[key] = roi
+    
+    # Se for inventory_roi, salvar um template da imagem
+    if screenshot_pil is not None:
+        if key == "inventory_roi":
+            x, y, w, h = roi["x"], roi["y"], roi["width"], roi["height"]
+            cropped = screenshot_pil.crop((x, y, x + w, y + h))
+            template_path = os.path.join(ASSETS_DIR, "inv_full_template.png")
+            cropped.save(template_path)
+            print(f"Template de texto salvo em: {template_path}")
+
+    # Preservar chaves extras
+    config.setdefault("hold_time",       0.58)
     config.setdefault("start_key",       "F6")
     config.setdefault("stop_key",        "F7")
     config.setdefault("green_threshold", 10)
-    config.setdefault("poll_interval",   0.05)
+    config.setdefault("poll_interval",   0.1)
+    config.setdefault("post_cast_delay", 0.1)
 
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-    print(f"\n✅  ROI salva em {CONFIG_FILE}:")
-    print(f"    x={roi['x']}, y={roi['y']}, width={roi['width']}, height={roi['height']}")
+    print(f"✅  ROI '{key}' salva em {CONFIG_FILE}")
 
 
-# ---------------------------------------------------------------------------
-# App Tkinter
-# ---------------------------------------------------------------------------
-
-class ROISelector(tk.Tk):
-    def __init__(self, screenshot_pil):
-        super().__init__()
-
-        self.title("Star Fishing — Selecione a região da barra de pesca")
+class ROISelector(tk.Toplevel):
+    def __init__(self, parent, screenshot_pil, target_key):
+        super().__init__(parent)
+        self.parent = parent
+        self.screenshot_pil = screenshot_pil
+        self.target_key = target_key
+        
+        self.title(f"Selecionando: {target_key}")
         self.resizable(False, False)
 
-        # Calcula escala
         orig_w, orig_h = screenshot_pil.size
         scale = min(MAX_DISPLAY_W / orig_w, MAX_DISPLAY_H / orig_h, 1.0)
         self.scale = scale
         disp_w = int(orig_w * scale)
         disp_h = int(orig_h * scale)
 
-        # Redimensiona imagem para exibição
         display_img = screenshot_pil.resize((disp_w, disp_h), Image.LANCZOS)
         self.tk_img = ImageTk.PhotoImage(display_img)
 
-        # Canvas
         self.canvas = tk.Canvas(self, width=disp_w, height=disp_h, cursor="crosshair")
         self.canvas.pack()
         self.canvas.create_image(0, 0, anchor="nw", image=self.tk_img)
 
-        # Barra de rodapé
         footer = tk.Frame(self, bg="#1e1e1e")
         footer.pack(fill="x")
 
         self.info_label = tk.Label(
-            footer, text="Clique e arraste para selecionar a região",
+            footer, text=f"Selecione a área para: {target_key}",
             bg="#1e1e1e", fg="#dddddd", font=("Consolas", 10), padx=10
         )
         self.info_label.pack(side="left", pady=6)
@@ -115,35 +121,27 @@ class ROISelector(tk.Tk):
         )
         self.save_btn.pack(side="left", padx=4)
 
-        # Estado de seleção
         self._rect_id   = None
         self._start     = None
         self._end       = None
-        self.roi_saved  = False
 
-        # Eventos de mouse
         self.canvas.bind("<ButtonPress-1>",   self._on_press)
         self.canvas.bind("<B1-Motion>",       self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
 
-        # Atalhos de teclado
         self.bind("<KeyPress-s>", lambda e: self.confirm_save())
         self.bind("<KeyPress-S>", lambda e: self.confirm_save())
         self.bind("<KeyPress-r>", lambda e: self.reset())
         self.bind("<KeyPress-R>", lambda e: self.reset())
         self.bind("<Return>",     lambda e: self.confirm_save())
 
-        # Centraliza na tela
-        self.update_idletasks()
-        sw = self.winfo_screenwidth()
-        sh = self.winfo_screenheight()
-        wx = (sw - self.winfo_width()) // 2
-        wy = max(0, (sh - self.winfo_height()) // 2)
-        self.geometry(f"+{wx}+{wy}")
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-    # ------------------------------------------------------------------
-    # Eventos de mouse
-    # ------------------------------------------------------------------
+        self.update_idletasks()
+        self.geometry(f"+0+0")
+
+    def on_close(self):
+        self.destroy()
 
     def _on_press(self, event):
         self._start = (event.x, event.y)
@@ -187,10 +185,6 @@ class ROISelector(tk.Tk):
                 fg="#00ff88" if confirmed else "#00ccff"
             )
 
-    # ------------------------------------------------------------------
-    # Ações
-    # ------------------------------------------------------------------
-
     def _compute_roi(self):
         x1 = int(min(self._start[0], self._end[0]) / self.scale)
         y1 = int(min(self._start[1], self._end[1]) / self.scale)
@@ -210,7 +204,7 @@ class ROISelector(tk.Tk):
         self._start = None
         self._end   = None
         self.save_btn.config(state="disabled")
-        self.info_label.config(text="Clique e arraste para selecionar a região", fg="#dddddd")
+        self.info_label.config(text=f"Selecione a área para: {self.target_key}", fg="#dddddd")
 
     def confirm_save(self):
         if self._start is None or self._end is None:
@@ -221,42 +215,50 @@ class ROISelector(tk.Tk):
             return
 
         roi = self._compute_roi()
-        save_roi(roi)
-        self.roi_saved = True
-        messagebox.showinfo(
-            "ROI Salva!",
-            f"Região salva com sucesso!\n\n"
-            f"x={roi['x']}, y={roi['y']}\n"
-            f"w={roi['width']}, h={roi['height']}\n\n"
-            f"Agora execute: python main.py"
-        )
+        save_config(self.target_key, roi, self.screenshot_pil)
+        messagebox.showinfo("ROI Salva!", f"Região {self.target_key} salva com sucesso!")
         self.destroy()
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+class MainMenu(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Star Fishing — Configuração")
+        self.geometry("400x300")
+        
+        lbl = tk.Label(self, text="Selecione o que deseja configurar:", font=("Arial", 12))
+        lbl.pack(pady=20)
 
-def main():
-    print("=" * 55)
-    print("  Star Fishing — Seletor de Região (ROI Selector)")
-    print("=" * 55)
-    print("Capturando tela...")
+        btn1 = tk.Button(self, text="🎣 Barra de Pesca", font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("roi"))
+        btn1.pack(pady=10)
 
-    with mss.mss() as sct:
-        monitor = sct.monitors[1]
-        raw = sct.grab(monitor)
-        screenshot = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+        btn2 = tk.Button(self, text="💬 Mensagem 'Inventory Full'", font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("inventory_roi"))
+        btn2.pack(pady=10)
 
-    print("Abrindo seletor visual...")
-    app = ROISelector(screenshot)
-    app.mainloop()
+        btn3 = tk.Button(self, text="💰 Botão 'Sell All'", font=("Arial", 10), width=30,
+                         command=lambda: self.start_capture("sell_button_roi"))
+        btn3.pack(pady=10)
+        
+        lbl_hint = tk.Label(self, text="Você terá 2 segundos para focar no jogo \nantes da captura de tela.", fg="gray")
+        lbl_hint.pack(pady=20)
 
-    if app.roi_saved:
-        print("\nPronto! Execute agora:  python main.py")
-    else:
-        print("Cancelado. ROI não salva.")
+    def start_capture(self, target_key):
+        self.withdraw()
+        print(f"\n[Atenção] Focando no jogo em 2 segundos para capturar '{target_key}'...")
+        time.sleep(2)
+        print("Capturando tela...")
+        with mss.mss() as sct:
+            monitor = sct.monitors[1]
+            raw = sct.grab(monitor)
+            screenshot = Image.frombytes("RGB", raw.size, raw.bgra, "raw", "BGRX")
+            
+        selector = ROISelector(self, screenshot, target_key)
+        self.wait_window(selector)
+        self.deiconify()
 
 
 if __name__ == "__main__":
-    main()
+    app = MainMenu()
+    app.mainloop()

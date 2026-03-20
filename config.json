@@ -1,14 +1,26 @@
 {
     "roi": {
-        "x": 1430,
-        "y": 425,
+        "x": 1431,
+        "y": 427,
         "width": 19,
-        "height": 223
+        "height": 221
     },
     "hold_time": 0.58,
     "start_key": "F6",
     "stop_key": "F7",
     "green_threshold": 10,
     "poll_interval": 0.1,
-    "post_cast_delay": 0.1
+    "post_cast_delay": 0.1,
+    "sell_button_roi": {
+        "x": 1201,
+        "y": 277,
+        "width": 118,
+        "height": 28
+    },
+    "inventory_roi": {
+        "x": 772,
+        "y": 229,
+        "width": 367,
+        "height": 105
+    }
 }

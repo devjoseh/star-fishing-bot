@@ -5,11 +5,14 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.j
 
 DEFAULT_CONFIG = {
     "roi": None,          # Definido pelo roi_selector.py
-    "hold_time": 0.75,    # Tempo de pressionar o mouse (segundos)
+    "inventory_roi": None, # ROI para a mensagem de inventário cheio
+    "sell_button_roi": None, # ROI para o botão Sell All
+    "hold_time": 0.58,    # Tempo de pressionar o mouse (segundos)
     "start_key": "F6",    # Tecla para iniciar o loop
     "stop_key": "F7",     # Tecla para parar o loop
     "green_threshold": 10, # Mínimo de pixels verdes para detectar barra em repouso
-    "poll_interval": 0.05  # Intervalo de verificação em segundos
+    "poll_interval": 0.1,  # Intervalo de verificação em segundos
+    "post_cast_delay": 0.1 # Atraso após o lançamento
 }
 
 

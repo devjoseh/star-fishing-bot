@@ -13,6 +13,17 @@ Controles padrão (editáveis em config.json):
 import sys
 import os
 import time
+import ctypes
+
+# Evita problemas de escalonamento (DPI scaling) do Windows 
+# fazendo o pydirectinput clicar na coordenada física correta
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
 
 # Garante que src/ seja encontrado independente de onde o script é chamado
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
