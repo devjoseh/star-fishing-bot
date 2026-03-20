@@ -29,6 +29,7 @@ except Exception:
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from automator import FishingAutomator
+from settings_ui import SettingsApp
 
 
 BANNER = r"""
@@ -66,16 +67,17 @@ def main():
     print(f"\n  [ {start_key} ]  Iniciar pesca")
     print(f"  [ {stop_key} ]  Parar pesca")
     print(f"  [ {bot.config.get('toggle_pause_key', 'F8')} ]  Ligar/Desligar Smart Pause")
-    print(f"  [ Ctrl+C ]  Sair")
+    print(f"  [ Ctrl+C ]  Sair via terminal")
     print("=" * 55)
     print()
 
     bot.start_hotkey_listener()
-    print("[Main] Aguardando teclas... (Ctrl+C para sair)")
+    print("[Main] Painel de Controle Iniciado. Pressione as hotkeys a qualquer momento.")
+    print("[Main] Feche a aba do Painel de Controle para desligar o bot por completo.")
 
     try:
-        while True:
-            time.sleep(0.5)
+        app = SettingsApp(bot)
+        app.mainloop()
     except KeyboardInterrupt:
         print("\n[Main] Encerrando...")
     finally:
