@@ -106,25 +106,33 @@ class ROISelector(tk.Toplevel):
         footer.pack(fill="x")
 
         self.info_label = tk.Label(
-            footer, text=f"Selecione a área para: {target_key}",
-            bg="#1e1e1e", fg="#dddddd", font=("Consolas", 10), padx=10
+            footer, text=f"Alvo: {target_key.upper()}  |  Selecione a área",
+            bg="#1e1e1e", fg="#aaaaaa", font=("Segoe UI", 10), padx=10
         )
         self.info_label.pack(side="left", pady=6)
 
         btn_frame = tk.Frame(footer, bg="#1e1e1e")
         btn_frame.pack(side="right", padx=8, pady=4)
 
-        tk.Button(
-            btn_frame, text="↺ Resetar (R)", command=self.reset,
-            bg="#555", fg="white", relief="flat", padx=8
-        ).pack(side="left", padx=4)
+        self.reset_btn = tk.Button(
+            btn_frame, text="Resetar (R)", command=self.reset,
+            bg="#333333", fg="white", activebackground="#444444", activeforeground="white",
+            relief="flat", font=("Segoe UI", 9, "bold"), padx=12, pady=4, cursor="hand2", bd=0
+        )
+        self.reset_btn.pack(side="left", padx=4)
 
         self.save_btn = tk.Button(
-            btn_frame, text="💾 Salvar ROI (S)", command=self.confirm_save,
-            bg="#1f6aa5", fg="white", relief="flat", padx=8,
+            btn_frame, text="Salvar ROI (Enter)", command=self.confirm_save,
+            bg="#0066cc", fg="white", activebackground="#0088ff", activeforeground="white",
+            relief="flat", font=("Segoe UI", 9, "bold"), padx=12, pady=4, cursor="hand2", bd=0,
             state="disabled"
         )
         self.save_btn.pack(side="left", padx=4)
+
+        self.reset_btn.bind("<Enter>", lambda e: self.reset_btn.config(bg="#444444") if self.reset_btn['state'] == 'normal' else None)
+        self.reset_btn.bind("<Leave>", lambda e: self.reset_btn.config(bg="#333333") if self.reset_btn['state'] == 'normal' else None)
+        self.save_btn.bind("<Enter>", lambda e: self.save_btn.config(bg="#0088ff") if self.save_btn['state'] == 'normal' else None)
+        self.save_btn.bind("<Leave>", lambda e: self.save_btn.config(bg="#0066cc") if self.save_btn['state'] == 'normal' else None)
 
         self._rect_id   = None
         self._start     = None
@@ -225,29 +233,67 @@ class ROISelector(tk.Toplevel):
         self.destroy()
 
 
+class ModernButton(tk.Button):
+    def __init__(self, parent, text, command, width=35):
+        super().__init__(
+            parent, text=text, command=command, width=width,
+            font=("Segoe UI", 10, "bold"), bg="#222222", fg="#FFFFFF",
+            activebackground="#333333", activeforeground="#FFFFFF",
+            relief="flat", bd=0, pady=12, cursor="hand2"
+        )
+        self.bind("<Enter>", self.on_enter)
+        self.bind("<Leave>", self.on_leave)
+
+    def on_enter(self, e):
+        self.config(bg="#333333")
+
+    def on_leave(self, e):
+        self.config(bg="#222222")
+
+
 class MainMenu(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Star Fishing — Configuração")
-        self.geometry("400x300")
+        self.title("Star Fishing Setup")
+        self.geometry("400x380")
+        self.configure(bg="#0F0F0F")
+        self.resizable(False, False)
         
-        lbl = tk.Label(self, text="Selecione o que deseja configurar:", font=("Arial", 12))
-        lbl.pack(pady=20)
+        container = tk.Frame(self, bg="#0F0F0F")
+        container.pack(expand=True, fill="both", padx=30, pady=30)
 
-        btn1 = tk.Button(self, text="🎣 Barra de Pesca", font=("Arial", 10), width=30,
-                         command=lambda: self.start_capture("roi"))
-        btn1.pack(pady=10)
+        lbl_title = tk.Label(
+            container, text="CONFIGURAÇÃO DE VISÃO", 
+            font=("Segoe UI", 14, "bold"), bg="#0F0F0F", fg="#FFFFFF"
+        )
+        lbl_title.pack(pady=(0, 5))
 
-        btn2 = tk.Button(self, text="💬 Mensagem 'Inventory Full'", font=("Arial", 10), width=30,
-                         command=lambda: self.start_capture("inventory_roi"))
-        btn2.pack(pady=10)
+        lbl_sub = tk.Label(
+            container, text="Mapeie os elementos na tela do jogo", 
+            font=("Segoe UI", 9), bg="#0F0F0F", fg="#888888"
+        )
+        lbl_sub.pack(pady=(0, 30))
 
-        btn3 = tk.Button(self, text="💰 Botão 'Sell All'", font=("Arial", 10), width=30,
-                         command=lambda: self.start_capture("sell_button_roi"))
-        btn3.pack(pady=10)
+        ModernButton(
+            container, text="BARRA DE PESCA", 
+            command=lambda: self.start_capture("roi")
+        ).pack(fill="x", pady=6)
+
+        ModernButton(
+            container, text="ALERTA 'INVENTORY FULL'", 
+            command=lambda: self.start_capture("inventory_roi")
+        ).pack(fill="x", pady=6)
+
+        ModernButton(
+            container, text="BOTÃO 'SELL ALL'", 
+            command=lambda: self.start_capture("sell_button_roi")
+        ).pack(fill="x", pady=6)
         
-        lbl_hint = tk.Label(self, text="Você terá 2 segundos para focar no jogo \nantes da captura de tela.", fg="gray")
-        lbl_hint.pack(pady=20)
+        lbl_hint = tk.Label(
+            container, text="Você terá 2 segundos para focar no jogo\nantes da captura de tela.", 
+            font=("Segoe UI", 8), bg="#0F0F0F", fg="#555555"
+        )
+        lbl_hint.pack(side="bottom", pady=(20, 0))
 
     def start_capture(self, target_key):
         self.withdraw()
