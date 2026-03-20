@@ -3,7 +3,7 @@
 > Automation bot for the Star Fishing minigame. Detects the fishing bar and automatically casts the line at the right moment.
 
 > [!IMPORTANT]
-> **Este projeto é estritamente educacional.** Foi desenvolvido para fins de **aprendizado** em automação de tarefas, visão computacional com OpenCV e scripting em Python. Não tem intenção de oferecer vantagens competitivas em nenhum ambiente online. Use por sua própria conta e risco.
+> **This project is strictly educational.** It was developed for **learning** purposes in task automation, computer vision with OpenCV, and Python scripting. It is not intended to provide a competitive advantage in any online environment. Use at your own risk.
 
 ---
 
