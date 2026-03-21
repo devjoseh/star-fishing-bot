@@ -251,6 +251,7 @@ class FishingAutomator:
                                 state = STATE_HOLDING_IDLE
                                 continue
                     
+                    wait_gone_start_time = time.time()
                     state = STATE_WAIT_GONE
 
                 # -----------------------------------------------------
@@ -271,6 +272,11 @@ class FishingAutomator:
                         pydirectinput.mouseDown(button="left")
                         ts = time.strftime("%H:%M:%S")
                         print(f"[{ts}] {t('bot_mouse_held_next')}")
+                        state = STATE_HOLDING_IDLE
+                    elif time.time() - wait_gone_start_time > 5.0:
+                        ts = time.strftime("%H:%M:%S")
+                        print(f"[{ts}] {t('bot_wait_gone_timeout', time='5.0')}")
+                        pydirectinput.mouseDown(button="left")
                         state = STATE_HOLDING_IDLE
 
                 time.sleep(poll_interval)

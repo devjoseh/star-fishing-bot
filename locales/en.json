@@ -81,5 +81,6 @@
     "bot_waiting_jitter": "⏳  Waiting {jitter}s before holding...",
     "bot_mouse_held_next": "🖱  Mouse held — waiting for next bar...",
     "bot_loop_ended": "[Bot] Loop ended.",
-    "bot_pause_toggled": "\n[Bot] 🔄 Smart Pause is now {state} (Hotkey pressed)."
+    "bot_pause_toggled": "\n[Bot] 🔄 Smart Pause is now {state} (Hotkey pressed).",
+    "bot_wait_gone_timeout": "⚠️ Bar didn't disappear after {time}s. Forcing reset..."
 }
