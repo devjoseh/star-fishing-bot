@@ -7,13 +7,7 @@
 
 ---
 
-## Download & Installation
-
-### Option A — Pre-built executable (no Python required)
-
-Download the latest `.exe` directly from the [**Releases page**](https://github.com/devjoseh/star-fishing-bot/releases/latest), run it, and skip straight to the [Setup step](#setup--usage).
-
-### Option B — Run from source
+## Installation
 
 Requires **Python 3.10+** and **Windows**.
 
@@ -22,8 +16,6 @@ git clone https://github.com/devjoseh/star-fishing-bot.git
 cd star-fishing-bot
 pip install -r requirements.txt
 ```
-
-Then follow the [Setup & Usage](#setup--usage) section below.
 
 ---
 
@@ -48,12 +40,13 @@ The bot monitors a configurable region of your screen for the green fishing bar.
 
 ### 1. Configure Screen Regions (first time only)
 
-With the game open in Borderless/Fullscreen mode, run the configuration tool:
+With the game open in Borderless/Fullscreen mode, run:
 
-- **Executable:** double-click `roi_selector.exe`
-- **Source:** `python roi_selector.py`
+```bash
+python launcher.py
+```
 
-A menu will open with 3 buttons. Configure all 3 regions:
+Click **Configure Regions**. A menu will open with 3 buttons. Configure all 3 regions:
 
 1. **Fishing Bar** — drag a box over where the fishing power bar appears on screen.
 2. **Inventory Full Message** — wait for your inventory to fill up, then drag a box over the red "Inventory Full" text. The tool will extract its shape as a visual template.
@@ -65,10 +58,11 @@ Click **Save ROI** (or press **S / Enter**) after each selection.
 
 ### 2. Run the bot
 
-- **Executable:** double-click `main.exe`
-- **Source:** `python main.py`
+```bash
+python launcher.py
+```
 
-The Control Panel window will open. Adjust any settings there — all changes are saved automatically.
+Click **Start Bot**. The Control Panel window will open. Adjust any settings there — all changes are saved automatically.
 
 | Key | Action |
 |-----|--------|
@@ -88,7 +82,7 @@ The fishing bar detector works by counting green pixels in the configured region
 - **Move the camera so the fishing bar sits against a dark background** — the detection is most accurate when there is low contrast around the bar area. Aim for a wall, dark floor, or shadowed surface behind it.
 - **Set game graphics to the lowest possible setting** — lower graphics reduce visual noise (particles, ambient effects, shadows) that could interfere with pixel detection.
 
-Applying all three of these before running `roi_selector.py` will give you the most reliable region configuration.
+Applying all three of these before configuring will give you the most reliable region configuration.
 
 ---
 
@@ -131,7 +125,8 @@ star-fishing/
 │   ├── pt.json        # Portuguese translations
 │   └── en.json        # English translations
 ├── assets/            # Visual templates (auto-generated)
-├── main.py            # Entry point
+├── launcher.py        # Entry point (launcher UI)
+├── main.py            # Bot startup logic
 ├── roi_selector.py    # Visual region configuration tool
 └── requirements.txt
 ```
