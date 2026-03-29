@@ -45,12 +45,10 @@ BANNER = r"""
 """
 
 
-def main():
-    print(BANNER)
-    print("=" * 55)
-
+def run_bot():
+    """Inicia o automator e abre o Painel de Controle. Bloqueia até o painel fechar."""
     bot = FishingAutomator()
-    set_language(bot.config.get("language", "pt"))
+    set_language(bot.config.get("language", "en"))
 
     start_key = bot.config.get("start_key", "F6")
     stop_key  = bot.config.get("stop_key",  "F7")
@@ -58,9 +56,8 @@ def main():
     if not bot.config.has_roi():
         print(t("main_no_roi"))
         print(t("main_run_roi"))
-        print("=" * 55)
     else:
-        roi = bot.config.get("roi")
+        roi  = bot.config.get("roi")
         hold = bot.config.get("hold_time", 0.75)
         print(f"{t('main_roi_configured')}   → x={roi['x']}, y={roi['y']}, "
               f"w={roi['width']}, h={roi['height']}")
@@ -68,7 +65,6 @@ def main():
 
     print(f"\n{t('main_start_fishing', start_key=start_key)}")
     print(t("main_stop_fishing", stop_key=stop_key))
-    print(t("main_toggle_pause", toggle_pause_key=bot.config.get('toggle_pause_key', 'F8')))
     print(t("main_exit"))
     print("=" * 55)
     print()
@@ -91,6 +87,12 @@ def main():
         bot.stop()
         bot.stop_hotkey_listener()
         print(t("main_goodbye"))
+
+
+def main():
+    print(BANNER)
+    print("=" * 55)
+    run_bot()
 
 
 if __name__ == "__main__":

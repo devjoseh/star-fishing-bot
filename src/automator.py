@@ -32,12 +32,11 @@ class FishingAutomator:
         self._stop_event = threading.Event()
         self._thread     = None
 
-        # Hotkeys
-        self.inputs.set_callbacks(self.start, self.stop, self.toggle_smart_pause)
+        # Hotkeys (Smart Pause é controlado via painel de configurações, não por hotkey)
+        self.inputs.set_callbacks(self.start, self.stop)
         self.inputs.set_keys(
             self.config.get("start_key", "F6"),
             self.config.get("stop_key",  "F7"),
-            self.config.get("toggle_pause_key", "F8")
         )
 
     # ------------------------------------------------------------------
@@ -126,7 +125,7 @@ class FishingAutomator:
                     is_bar_on_screen = self.vision.count_green_pixels(frame) > 0
 
                     # 1) Primeiro, verifica se o inventário está cheio E se a barra está visível (pesca não em andamento)
-                    if self.vision.is_inventory_full(sct) and is_bar_on_screen:
+                    if self.config.get("auto_sell_enabled", True) and self.vision.is_inventory_full(sct) and is_bar_on_screen:
                         ts = time.strftime("%H:%M:%S")
                         print(f"[{ts}] {t('bot_inv_full')}")
 

@@ -31,6 +31,8 @@
     "casts_to_pause": "Casts to Pause",
     "pause_duration": "Pause Duration (min)",
     "spam_threshold": "Spam Time (sec)",
+    "automation_group": "AUTOMATION",
+    "auto_sell_lbl": "Auto Sell",
     "detection_group": "DETECTION",
     "green_pixels_lbl": "Min Green Pixels",
     "poll_interval_lbl": "Poll Interval (sec)",
@@ -82,5 +84,15 @@
     "bot_mouse_held_next": "🖱  Mouse held — waiting for next bar...",
     "bot_loop_ended": "[Bot] Loop ended.",
     "bot_pause_toggled": "\n[Bot] 🔄 Smart Pause is now {state} (Hotkey pressed).",
-    "bot_wait_gone_timeout": "⚠️ Bar didn't disappear after {time}s. Forcing reset..."
+    "bot_wait_gone_timeout": "⚠️ Bar didn't disappear after {time}s. Forcing reset...",
+    "launcher_config_status": "CONFIGURATION STATUS",
+    "launcher_roi_fishing": "Fishing Bar",
+    "launcher_roi_sell": "Sell All Button",
+    "launcher_roi_inventory": "Inventory Full Message",
+    "launcher_required_badge": "required",
+    "launcher_optional_badge": "optional",
+    "launcher_missing_warn": "Configure the required regions before starting.",
+    "launcher_configure_btn": "⚙   Configure Regions",
+    "launcher_start_btn": "🎣   Start Bot",
+    "launcher_footer_hint": "Settings are saved automatically."
 }

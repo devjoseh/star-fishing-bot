@@ -2,12 +2,28 @@
 
 > Automation bot for the Star Fishing minigame. Detects the fishing bar, automatically casts the line at the right moment, and auto-sells your stars when the inventory is full.
 
-> [!WARNING]
-> **Resolution & Scaling Alert**
-> The default configuration (`config.json`) included in this repository was calibrated for a **1920x1080 monitor with 125% Display Scaling**. If your monitor has a different resolution or scaling, the bot will likely miss the clicks. **You must re-run the configuration step below** to match your specific screen.
-
 > [!IMPORTANT]
 > **This project is strictly educational.** It was developed for **learning** purposes in task automation, computer vision with OpenCV, and Python scripting. It is not intended to provide a competitive advantage in any online environment. Use at your own risk.
+
+---
+
+## Download & Installation
+
+### Option A — Pre-built executable (no Python required)
+
+Download the latest `.exe` directly from the [**Releases page**](https://github.com/devjoseh/star-fishing-bot/releases/latest), run it, and skip straight to the [Setup step](#setup--usage).
+
+### Option B — Run from source
+
+Requires **Python 3.10+** and **Windows**.
+
+```bash
+git clone https://github.com/devjoseh/star-fishing-bot.git
+cd star-fishing-bot
+pip install -r requirements.txt
+```
+
+Then follow the [Setup & Usage](#setup--usage) section below.
 
 ---
 
@@ -18,8 +34,8 @@ The bot monitors a configurable region of your screen for the green fishing bar.
 1. **Releases** the held mouse button to start the cast.
 2. **Holds** the left mouse button for `hold_time` seconds (filling the bar to the top).
 3. **Releases** to cast the line into the water.
-4. **Resumes holding** the mouse down waiting for the next bar to appear.
-5. **Auto-Sells**: If the "Inventory Full" alert appears on your screen while waiting, the bot will automatically open the backpack (Key 3), click "Sell All", and resume fishing (Key 1).
+4. **Resumes holding** the mouse waiting for the next bar to appear.
+5. **Auto-Sells** *(optional)*: If the "Inventory Full" alert appears while waiting, the bot automatically opens the backpack (Key `3`), clicks "Sell All", and resumes fishing (Key `1`). This can be toggled on/off in the Control Panel.
 
 ```
 🖱 Hold (waiting) → ✅ Green detected → 🎣 Cast (hold_time) → 🖱 Hold again
@@ -28,87 +44,74 @@ The bot monitors a configurable region of your screen for the green fishing bar.
 
 ---
 
-## Requirements
-
-- Python 3.10+
-- Windows
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
 ## Setup & Usage
 
-### 1. Configure Screen Regions (First time only)
+### 1. Configure Screen Regions (first time only)
 
-With the game open and in Borderless/Fullscreen mode:
+With the game open in Borderless/Fullscreen mode, run the configuration tool:
 
-```bash
-python roi_selector.py
-```
+- **Executable:** double-click `roi_selector.exe`
+- **Source:** `python roi_selector.py`
 
-A menu will open with 3 buttons. You need to configure all 3 regions:
-1. **Fishing Bar**: Click the button, wait 2 seconds (focus on the game), and drag a box over where the fishing bar appears.
-2. **Inventory Full Message**: Wait for your inventory to fill up, click this button, wait 2 seconds, and drag a box exactly over the red "Inventory Full" text. This will extract the text shape as a visual template.
-3. **Sell All Button**: Open your backpack in-game, click this button, wait 2 seconds, and drag a box directly over the green "Sell All" button.
+A menu will open with 3 buttons. Configure all 3 regions:
 
-Press **S** or **Enter** after selecting each box to save it to your `config.json`.
+1. **Fishing Bar** — drag a box over where the fishing power bar appears on screen.
+2. **Inventory Full Message** — wait for your inventory to fill up, then drag a box over the red "Inventory Full" text. The tool will extract its shape as a visual template.
+3. **Sell All Button** — open your backpack in-game and drag a box directly over the green "Sell All" button.
+
+Click **Save ROI** (or press **S / Enter**) after each selection.
+
+> See [Tips for Best Detection](#tips-for-best-detection) before configuring — proper setup makes a big difference.
 
 ### 2. Run the bot
 
-```bash
-python main.py
-```
+- **Executable:** double-click `main.exe`
+- **Source:** `python main.py`
+
+The Control Panel window will open. Adjust any settings there — all changes are saved automatically.
 
 | Key | Action |
 |-----|--------|
 | `F6` | Start fishing loop |
 | `F7` | Stop fishing loop |
-| `Ctrl+C` | Exit the script |
+| `Ctrl+C` | Exit the script (terminal) |
 
 > Make sure the **game window is focused** when you press `F6`.
 
 ---
 
+## Tips for Best Detection
+
+The fishing bar detector works by counting green pixels in the configured region. A few in-game adjustments significantly improve reliability:
+
+- **Zoom out to the maximum** — a zoomed-out view has fewer on-screen elements, reducing false positives from other green objects in the scene.
+- **Move the camera so the fishing bar sits against a dark background** — the detection is most accurate when there is low contrast around the bar area. Aim for a wall, dark floor, or shadowed surface behind it.
+- **Set game graphics to the lowest possible setting** — lower graphics reduce visual noise (particles, ambient effects, shadows) that could interfere with pixel detection.
+
+Applying all three of these before running `roi_selector.py` will give you the most reliable region configuration.
+
+---
+
 ## Configuration
 
-The `config.json` file is auto-generated by the `roi_selector.py` tool. You can tweak the behavioral variables manually:
-
-```json
-{
-    "roi": { "x": 1430, "y": 425, "width": 19, "height": 223 },
-    "inventory_roi": { "x": 800, "y": 200, "width": 300, "height": 100 },
-    "sell_button_roi": { "x": 1200, "y": 250, "width": 100, "height": 40 },
-    "hold_time": 0.58,
-    "start_key": "F6",
-    "stop_key": "F7",
-    "green_threshold": 10,
-    "poll_interval": 0.1,
-    "post_cast_delay": 0.1,
-    "inactive_pause_enabled": false,
-    "inactive_pause_triggers": 4,
-    "inactive_pause_duration": 15.0,
-    "inactive_cast_time_threshold": 5.0
-}
-```
+`config.json` is generated automatically by `roi_selector.py` and lives only on your machine (it is not committed to the repository). All behavioral settings can be adjusted live in the **Control Panel** without editing the file manually.
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `roi` | *(generated)* | Screen region where the power bar appears |
+| `roi` | *(generated)* | Screen region where the fishing power bar appears |
 | `inventory_roi` | *(generated)* | Screen region where the "Inventory Full" text appears |
-| `sell_button_roi` | *(generated)* | Screen region (and center coordinates) for the Sell All button |
-| `hold_time` | `0.58` | Seconds to hold mouse while casting to scale the power bar |
-| `start_key` | `F6` | Hotkey to start the loop |
-| `stop_key` | `F7` | Hotkey to stop the loop |
-| `green_threshold` | `10` | Min green pixels to detect the bar is ready |
-| `poll_interval` | `0.1` | Screen check interval (seconds) |
-| `post_cast_delay` | `0.1` | Pause between release and casting again |
-| `inactive_pause_enabled` | `false` | Set to `true` to auto-pause the bot if the fishing area temporarily closes |
-| `inactive_pause_triggers` | `4` | Number of rapid cast cancellations before pausing |
-| `inactive_pause_duration` | `15.0` | How many minutes the bot will sleep when the area is inactive |
-| `inactive_cast_time_threshold` | `5.0` | Max seconds between casts to consider it a "fast rejection" by the game |
+| `sell_button_roi` | *(generated)* | Screen region for the Sell All button |
+| `hold_time` | `0.58` | Seconds to hold mouse while casting |
+| `start_key` | `F6` | Hotkey to start the fishing loop |
+| `stop_key` | `F7` | Hotkey to stop the fishing loop |
+| `green_threshold` | `10` | Minimum green pixels to detect the bar as ready |
+| `poll_interval` | `0.1` | Screen check interval in seconds |
+| `post_cast_delay` | `0.1` | Pause between cast release and holding again |
+| `auto_sell_enabled` | `true` | Auto-sell stars when inventory is full |
+| `inactive_pause_enabled` | `false` | Pause the bot if the fishing area goes inactive |
+| `inactive_pause_triggers` | `5` | Rapid cast rejections before triggering the pause |
+| `inactive_pause_duration` | `1` | Minutes to sleep when the area is inactive |
+| `inactive_cast_time_threshold` | `6.0` | Max seconds between casts to count as a fast rejection |
 
 > **Tuning tip:** If the bar doesn't reach the top, decrease `hold_time`. If it overshoots, increase it slightly.
 
@@ -122,10 +125,14 @@ star-fishing/
 │   ├── automator.py   # Main loop (state machine)
 │   ├── vision.py      # Screen capture & green pixel detection
 │   ├── inputs.py      # Mouse hold/release + hotkey listener
-│   └── config.py      # Config loader/saver
+│   ├── config.py      # Config loader/saver
+│   └── settings_ui.py # Control panel UI
+├── locales/
+│   ├── pt.json        # Portuguese translations
+│   └── en.json        # English translations
+├── assets/            # Visual templates (auto-generated)
 ├── main.py            # Entry point
-├── roi_selector.py    # Visual ROI selection tool
-├── config.json        # User configuration (auto-generated)
+├── roi_selector.py    # Visual region configuration tool
 └── requirements.txt
 ```
 
@@ -133,4 +140,4 @@ star-fishing/
 
 ## Disclaimer
 
-This bot is intended for personal, educational use. Use at your own risk — automated gameplay may violate the terms of service of the game.
+This bot is intended for personal, educational use. Automated gameplay may violate the terms of service of the game. Use at your own risk.
